@@ -90,7 +90,7 @@ void queue_print(Queue q) {
 		}
 	} while (i != q.front);
 
-	printf("\n\n");
+	printf("\n");
 
 	return;
 }
@@ -106,8 +106,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	for (int i = 0; i < 5; i++) {
-		pop(&q);
-		queue_print(q);
+		element temp = pop(&q);
+		printf("%d\n", temp);
 	}
 	free(q.data);
 
