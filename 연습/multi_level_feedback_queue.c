@@ -1,15 +1,13 @@
 ﻿#include <stdio.h>
 #include <stdlib.h>
+#pragma warning(disable:4996)
 
 #define TRUE 1
 #define FALSE 0
 #define ERROR -1
-#define MAX_SIZE 10
+#define MAX_SIZE 100	// 큐 최대 크기
 
-typedef int element;
-typedef int boolean;
-
-// #define SWAP(a,b) {int t; t = a; a = b; b = t;}
+#define queue_cnt 4
 
 // 오류 출력
 void error_handling(char* message);
@@ -21,6 +19,9 @@ typedef struct process {
 	int computing_time;
 	int arrival_time;	// arrival_time
 } Process;
+
+typedef Process element;
+typedef int boolean;
 
 // 원형 큐
 typedef struct circular_queue {
@@ -96,10 +97,44 @@ void queue_print(Queue q) {
 }
 
 int main(int argc, char* argv[]) {
-	Queue q;
+	//큐 초기화
+	Queue ready_q, q1, q2, q3, q4;
+	init_queue(&ready_q), init_queue(&q1), init_queue(&q2), init_queue(&q3), init_queue(&q4);
 
-	init_queue(&q);
+	int cur_time = 0;
 
+	// 프로세스 입력
+	printf("Input(type process_id priority computing_time):\n");
+	while (TRUE) {
+		int type, pid, priority, computing_time;
+		Process p;
+
+		scanf("%d %d %d %d", &type, &pid, &priority, &computing_time);
+		
+		if (type == -1) {
+			break;
+		}
+		else if (type == 0) {
+			// time quantum 진행
+			// pop - time quantum과 computing time 비교 -> 함수화 가능한가
+		}
+		else if (type == 1) {
+			p.pid = pid, p.priority = priority, p.computing_time = computing_time;
+			p.arrival_time = cur_time;
+
+			push(&ready_q, p);
+		}
+		else {
+			printf("Wrong Input\n");
+		}
+	}
+
+	// -1 입력 이후
+
+	Process result = pop(&ready_q);
+	printf("%d", result.pid);
+
+	/*
 	for (int i = 0; i < 5; i++) {
 		push(&q, i);
 		queue_print(q);
@@ -110,6 +145,9 @@ int main(int argc, char* argv[]) {
 		printf("%d\n", temp);
 	}
 	free(q.data);
+	*/
+
+	free(ready_q.data), free(q1.data), free(q2.data), free(q3.data), free(q4.data);
 
 	return 0;
 }
