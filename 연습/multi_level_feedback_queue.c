@@ -20,6 +20,7 @@ typedef struct process {
 	int computing_time;
 	int remaining_time;	// 남은 시간
 	int arrival_time;	// arrival_time
+	int turn_around_time;
 	int queue_lev;	// 종료 시점 큐
 } Process;
 
@@ -85,11 +86,37 @@ void queue_print(Queue q) {
 		return;
 	}
 
-	printf("pid  priority  computing_time  remaining_time  arrival_time  queue_lev\n");
+	printf("pid  priority  computing_time  remaining_time  arrival_time  turn_around_time  queue_lev\n");
 	do {
 		i = (i + 1) % MAX_SIZE;
 		Process data = q.data[i];
-		printf("%4d %9d %15d %15d %13d %10d\n", data.pid, data.priority, data.computing_time, data.remaining_time, data.arrival_time, data.queue_lev);
+		printf("%4d %9d %15d %15d %13d %16d %10d\n", data.pid, data.priority, data.computing_time, data.remaining_time, data.arrival_time, data.turn_around_time, data.queue_lev);
+
+		if (i == q.rear) {
+			break;
+		}
+	} while (i != q.front);
+
+	printf("\n");
+
+	return;
+}
+
+// 큐 출력
+void result_queue_print(Queue q) {
+	int i = q.front;
+
+	if (is_empty(&q)) {
+		printf("Queue Empty\n");
+
+		return;
+	}
+
+	printf("pid  priority  computing_time  turn_around_time\n");
+	do {
+		i = (i + 1) % MAX_SIZE;
+		Process data = q.data[i];
+		printf("%4d %9d %15d %16d\n", data.pid, data.priority, data.computing_time, data.turn_around_time);
 
 		if (i == q.rear) {
 			break;
@@ -108,6 +135,7 @@ Multilevel Feedback Queue Algorithm
 큐 개수: 4
 Time Quantum: 20
 */
+
 void time_passes(Process p, Queue* qs, Queue* result_q, int* cur_time);
 
 int main(int argc, char* argv[]) {
@@ -142,7 +170,7 @@ int main(int argc, char* argv[]) {
 		}
 		else if (type == 0) {
 			// 가장 먼저 삽입된 프로세스 pop
-			p = pop(&ready_q);
+			Process p = pop(&ready_q);
 
 			// time quantum 진행
 			time_passes(p, qs, &result_q, &cur_time);
@@ -151,6 +179,7 @@ int main(int argc, char* argv[]) {
 			p.pid = pid, p.priority = priority, p.computing_time = computing_time;
 			p.arrival_time = cur_time;
 			p.remaining_time = computing_time;
+			p.turn_around_time = 0;
 			p.queue_lev = -1;
 
 			push(&ready_q, p);
@@ -160,9 +189,21 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	// -1 입력 이후
+	// 준비 큐 순회
+	while (!is_empty(&ready_q)) {
+		Process p = pop(&ready_q);
+		time_passes(p, qs, &result_q, &cur_time);
+	}
 
+	// Multilevel Feedback Queue Scheduling
+	for (int i = 0; i < QUEUE_CNT; i++) {
+		while (!is_empty(&qs[i])) {
+			Process p = pop(&qs[i]);
+			time_passes(p, qs, &result_q, &cur_time);
+		}
+	}
 
+	result_queue_print(result_q);
 
 	free(ready_q.data);
 	for (int i = 0; i < QUEUE_CNT; i++)
@@ -192,11 +233,27 @@ void time_passes(Process p, Queue* qs, Queue *result_q, int* cur_time) {
 	else if (p.remaining_time == TIME) {
 		*cur_time += 20;
 		p.remaining_time -= 20;
+		p.turn_around_time = *cur_time - p.arrival_time;
 		push(result_q, p);
 	}
 	else {
 		*cur_time += p.remaining_time;
 		p.remaining_time = 0;
+		p.turn_around_time = *cur_time - p.arrival_time;
 		push(result_q, p);
 	}
 }
+
+
+/*
+ex1)
+1 1 0 10
+1 2 0 20
+1 3 0 30
+0 0 0 0
+1 4 0 20
+0 0 0 0
+1 5 0 30
+0 0 0 0
+-1 0 0 0
+*/
