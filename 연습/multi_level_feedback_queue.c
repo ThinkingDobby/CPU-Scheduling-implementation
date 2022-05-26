@@ -6,7 +6,9 @@
 #define FALSE 0
 #define ERROR -1
 #define MAX_SIZE 100	// 큐 최대 크기
-#define TIME 20
+#define QUEUE_CNT 4	// 큐 개수
+
+#define TIME 20	// Time Quantum
 
 // 오류 출력
 void error_handling(char* message);
@@ -18,7 +20,7 @@ typedef struct process {
 	int computing_time;
 	int remaining_time;	// 남은 시간
 	int arrival_time;	// arrival_time
-	int end_queue;	// 종료 시점 큐
+	int queue_lev;	// 종료 시점 큐
 } Process;
 
 typedef Process element;
@@ -78,16 +80,16 @@ void queue_print(Queue q) {
 	int i = q.front;
 
 	if (is_empty(&q)) {
-		error_handling("Queue Empty\n");
+		printf("Queue Empty\n");
 
 		return;
 	}
 
-	printf("pid priority computing_time remaining_time arrival_time end_queue\n");
+	printf("pid  priority  computing_time  remaining_time  arrival_time  queue_lev\n");
 	do {
 		i = (i + 1) % MAX_SIZE;
 		Process data = q.data[i];
-		printf("%3d %8d %14d %14d %12d %9d\n", data.pid, data.priority, data.computing_time, data.remaining_time, data.arrival_time, data.end_queue);
+		printf("%4d %9d %15d %15d %13d %10d\n", data.pid, data.priority, data.computing_time, data.remaining_time, data.arrival_time, data.queue_lev);
 
 		if (i == q.rear) {
 			break;
@@ -104,7 +106,7 @@ void queue_print(Queue q) {
 Multilevel Feedback Queue Algorithm
 입력 및 진행: 예제와 같음
 큐 개수: 4
-time quantum: 20
+Time Quantum: 20
 */
 void time_passes(Process p, Queue* qs, Queue* result_q, int* cur_time);
 
@@ -115,7 +117,7 @@ int main(int argc, char* argv[]) {
 
 	//큐 초기화
 	init_queue(&ready_q);
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < QUEUE_CNT; i++)
 		init_queue(&qs[i]);
 
 	// 결과 큐 초기화
@@ -149,7 +151,7 @@ int main(int argc, char* argv[]) {
 			p.pid = pid, p.priority = priority, p.computing_time = computing_time;
 			p.arrival_time = cur_time;
 			p.remaining_time = computing_time;
-			p.end_queue = -1;
+			p.queue_lev = -1;
 
 			push(&ready_q, p);
 		}
@@ -159,29 +161,11 @@ int main(int argc, char* argv[]) {
 	}
 
 	// -1 입력 이후
-	queue_print(ready_q);
-	printf("-----\n");
-	queue_print(result_q);
-	printf("-----\n");
-	queue_print(qs[0]);
-	printf("-----\n");
-	printf("%d", cur_time);
 
-	/*
-	for (int i = 0; i < 5; i++) {
-		push(&q, i);
-		queue_print(q);
-	}
 
-	for (int i = 0; i < 5; i++) {
-		element temp = pop(&q);
-		printf("%d\n", temp);
-	}
-	free(q.data);
-	*/
 
 	free(ready_q.data);
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < QUEUE_CNT; i++)
 		free(qs[i].data);
 
 	return 0;
@@ -194,11 +178,15 @@ void error_handling(char* message) {
 }
 
 void time_passes(Process p, Queue* qs, Queue *result_q, int* cur_time) {
-	int next_q_lev = p.end_queue + 1;
+	int next_q_lev = p.queue_lev + 1;
 
 	if (p.remaining_time > TIME) {
 		*cur_time += 20;
 		p.remaining_time -= 20;
+		if (next_q_lev == QUEUE_CNT)	// 마지막 큐는 RR - 해당 큐 마지막에 프로세스 다시 추가
+			next_q_lev--;
+		else
+			p.queue_lev = next_q_lev;
 		push(&qs[next_q_lev], p);
 	}
 	else if (p.remaining_time == TIME) {
