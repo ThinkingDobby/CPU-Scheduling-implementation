@@ -105,6 +105,7 @@ void queue_print(Queue q) {
 // 큐 출력
 void result_queue_print(Queue q) {
 	int i = q.front;
+	int sum = 0;
 
 	if (is_empty(&q)) {
 		printf("Queue Empty\n");
@@ -112,11 +113,15 @@ void result_queue_print(Queue q) {
 		return;
 	}
 
+	printf("==================== 결과 ====================\n");
+	printf("-----------------------------------------------\n");
 	printf("pid  priority  computing_time  turn_around_time\n");
+	printf("-----------------------------------------------\n");
 	do {
 		i = (i + 1) % MAX_SIZE;
 		Process data = q.data[i];
 		printf("%4d %9d %15d %16d\n", data.pid, data.priority, data.computing_time, data.turn_around_time);
+		sum += data.turn_around_time;
 
 		if (i == q.rear) {
 			break;
@@ -124,6 +129,9 @@ void result_queue_print(Queue q) {
 	} while (i != q.front);
 
 	printf("\n");
+
+	if (sum != 0)
+		printf("average_turn_around_time: %d\n", sum / (q.rear - q.front));
 
 	return;
 }
@@ -136,6 +144,7 @@ Multilevel Feedback Queue Algorithm
 Time Quantum: 20
 */
 
+// 시간 진행
 void time_passes(Process p, Queue* qs, Queue* result_q, int* cur_time);
 
 int main(int argc, char* argv[]) {
@@ -156,11 +165,24 @@ int main(int argc, char* argv[]) {
 	int cur_time = 0;
 
 	// 프로세스 입력
-	printf("Input(type process_id priority computing_time):\n");
+	printf("===================== Multilevel Feedback Queue =====================\n\n");
+
+	printf("type          :   -1(입력 종료), 0(프로세스 생성), 1(time quantum 진행)\n");
+	printf("pid           :   프로세스 아이디\n");
+	printf("priority      :   프로세스 우선순위\n");
+	printf("computing_time:   계산 시간\n\n");
+
+	printf("            공백 포함해 다음 내용을 순서대로 입력\n");
+	printf("            ---------------------------------------\n");
+	printf("            type process_id priority computing_time\n");
+	printf("            ---------------------------------------\n");
+
+	int t = 1;
 	while (TRUE) {
 		int type, pid, priority, computing_time;
 		Process p;
 
+		printf("%d번째 입력:", t);
 		int chk = scanf("%d %d %d %d", &type, &pid, &priority, &computing_time);
 		if (chk != 4)	// 입력 값 검증
 			error_handling("Wrong Input");
@@ -168,14 +190,13 @@ int main(int argc, char* argv[]) {
 		if (type == -1) {
 			break;
 		}
-		else if (type == 0) {
+		else if (type == 1) {
 			// 가장 먼저 삽입된 프로세스 pop
 			Process p = pop(&ready_q);
 
-			// time quantum 진행
 			time_passes(p, qs, &result_q, &cur_time);
 		}
-		else if (type == 1) {
+		else if (type == 0) {
 			p.pid = pid, p.priority = priority, p.computing_time = computing_time;
 			p.arrival_time = cur_time;
 			p.remaining_time = computing_time;
@@ -187,6 +208,7 @@ int main(int argc, char* argv[]) {
 		else {	// 잘못된 타입 입력
 			printf("Wrong Type\n");
 		}
+		t += 1;
 	}
 
 	// 준비 큐 순회
@@ -203,6 +225,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
+	printf("\n");
 	result_queue_print(result_q);
 
 	free(ready_q.data);
@@ -246,14 +269,18 @@ void time_passes(Process p, Queue* qs, Queue *result_q, int* cur_time) {
 
 
 /*
-ex1)
-1 1 0 10
-1 2 0 20
-1 3 0 30
-0 0 0 0
-1 4 0 20
-0 0 0 0
-1 5 0 30
-0 0 0 0
+0 1 25 80
+0 2 15 40
+0 3 8 30
+1 0 0 0
+0 4 12 10
+0 5 22 30
+0 6 28 50
+1 0 0 0
+0 7 5 20
+0 8 3 40
+0 9 13 60
+1 0 0 0
+0 10 24 45
 -1 0 0 0
 */
