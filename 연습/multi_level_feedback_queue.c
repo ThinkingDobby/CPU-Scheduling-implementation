@@ -105,7 +105,8 @@ void queue_print(Queue q) {
 // 큐 출력
 void result_queue_print(Queue q) {
 	int i = q.front;
-	int sum = 0;
+	int sum = 0;	// 평균 반환 시간 계산 위함
+	int sum_nom = 0;	// 정규화된 평균 반환 시간 계산 위함
 
 	if (is_empty(&q)) {
 		printf("Queue Empty\n");
@@ -122,6 +123,10 @@ void result_queue_print(Queue q) {
 		Process data = q.data[i];
 		printf("%4d %9d %15d %16d\n", data.pid, data.priority, data.computing_time, data.turn_around_time);
 		sum += data.turn_around_time;
+		if (data.turn_around_time != 0)
+			sum_nom += data.turn_around_time / data.computing_time;
+		else
+			error_handling("Zero Division");
 
 		if (i == q.rear) {
 			break;
@@ -130,8 +135,10 @@ void result_queue_print(Queue q) {
 
 	printf("\n");
 
-	if (sum != 0)
+	if (sum != 0) {
 		printf("average_turn_around_time: %d\n", sum / (q.rear - q.front));
+		printf("nomalized_turn_around_time: %d\n", sum_nom / (q.rear - q.front));
+	}
 
 	return;
 }
